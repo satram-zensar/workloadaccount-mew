@@ -1,0 +1,235 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Provision seven AWS Accounts under a targeted OU using Account Factory (Service Catalog).
+
+Parameters:
+  ProductId:
+    Type: String
+    Description: The Product ID from Account Factory
+
+  ProvisioningArtifactId:
+    Type: String
+    Description: Provisioning artifact ID used for all accounts
+
+  AccountEmail1:
+    Type: String
+    Description: Email for account 1
+  AccountName1:
+    Type: String
+    Description: TU
+
+  AccountEmail2:
+    Type: String
+    Description: Email for account 2
+  AccountName2:
+    Type: String
+    Description: INT
+
+  AccountEmail3:
+    Type: String
+    Description: Email for account 3
+  AccountName3:
+    Type: String
+    Description: CUST
+
+  AccountEmail4:
+    Type: String
+    Description: Email for account 4
+  AccountName4:
+    Type: String
+    Description: SEC
+
+  AccountEmail5:
+    Type: String
+    Description: Email for account 5
+  AccountName5:
+    Type: String
+    Description: COLL
+
+  AccountEmail6:
+    Type: String
+    Description: Email for account 6
+  AccountName6:
+    Type: String
+    Description: COMM
+
+  AccountEmail7:
+    Type: String
+    Description: Email for account 7
+  AccountName7:
+    Type: String
+    Description: FIN
+
+  ManagedOrganizationalUnit:
+    Type: String
+    Description: OU ID where the new accounts should be placed
+
+Resources:
+  CreateAccountTU:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductId: !Ref ProductId
+      ProvisioningArtifactId: !Ref ProvisioningArtifactId
+      ProvisionedProductName: !Sub "${AccountName1}-Provisioned"
+      ProvisioningParameters:
+        - Key: AccountEmail
+          Value: !Ref AccountEmail1
+        - Key: AccountName
+          Value: !Ref AccountName1
+        - Key: ManagedOrganizationalUnit
+          Value: !Ref ManagedOrganizationalUnit
+        - Key: SSOUserEmail
+          Value: !Ref AccountEmail1
+        - Key: SSOUserFirstName
+          Value: Default
+        - Key: SSOUserLastName
+          Value: User
+
+  CreateAccountINT:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductId: !Ref ProductId
+      ProvisioningArtifactId: !Ref ProvisioningArtifactId
+      ProvisionedProductName: !Sub "${AccountName2}-Provisioned"
+      ProvisioningParameters:
+        - Key: AccountEmail
+          Value: !Ref AccountEmail2
+        - Key: AccountName
+          Value: !Ref AccountName2
+        - Key: ManagedOrganizationalUnit
+          Value: !Ref ManagedOrganizationalUnit
+        - Key: SSOUserEmail
+          Value: !Ref AccountEmail2
+        - Key: SSOUserFirstName
+          Value: Default
+        - Key: SSOUserLastName
+          Value: User
+
+  CreateAccountCUST:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductId: !Ref ProductId
+      ProvisioningArtifactId: !Ref ProvisioningArtifactId
+      ProvisionedProductName: !Sub "${AccountName3}-Provisioned"
+      ProvisioningParameters:
+        - Key: AccountEmail
+          Value: !Ref AccountEmail3
+        - Key: AccountName
+          Value: !Ref AccountName3
+        - Key: ManagedOrganizationalUnit
+          Value: !Ref ManagedOrganizationalUnit
+        - Key: SSOUserEmail
+          Value: !Ref AccountEmail3
+        - Key: SSOUserFirstName
+          Value: Default
+        - Key: SSOUserLastName
+          Value: User
+
+  CreateAccountSEC:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductId: !Ref ProductId
+      ProvisioningArtifactId: !Ref ProvisioningArtifactId
+      ProvisionedProductName: !Sub "${AccountName4}-Provisioned"
+      ProvisioningParameters:
+        - Key: AccountEmail
+          Value: !Ref AccountEmail4
+        - Key: AccountName
+          Value: !Ref AccountName4
+        - Key: ManagedOrganizationalUnit
+          Value: !Ref ManagedOrganizationalUnit
+        - Key: SSOUserEmail
+          Value: !Ref AccountEmail4
+        - Key: SSOUserFirstName
+          Value: Default
+        - Key: SSOUserLastName
+          Value: User
+
+  CreateAccountCOLL:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductId: !Ref ProductId
+      ProvisioningArtifactId: !Ref ProvisioningArtifactId
+      ProvisionedProductName: !Sub "${AccountName5}-Provisioned"
+      ProvisioningParameters:
+        - Key: AccountEmail
+          Value: !Ref AccountEmail5
+        - Key: AccountName
+          Value: !Ref AccountName5
+        - Key: ManagedOrganizationalUnit
+          Value: !Ref ManagedOrganizationalUnit
+        - Key: SSOUserEmail
+          Value: !Ref AccountEmail5
+        - Key: SSOUserFirstName
+          Value: Default
+        - Key: SSOUserLastName
+          Value: User
+
+  CreateAccountCOMM:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductId: !Ref ProductId
+      ProvisioningArtifactId: !Ref ProvisioningArtifactId
+      ProvisionedProductName: !Sub "${AccountName6}-Provisioned"
+      ProvisioningParameters:
+        - Key: AccountEmail
+          Value: !Ref AccountEmail6
+        - Key: AccountName
+          Value: !Ref AccountName6
+        - Key: ManagedOrganizationalUnit
+          Value: !Ref ManagedOrganizationalUnit
+        - Key: SSOUserEmail
+          Value: !Ref AccountEmail6
+        - Key: SSOUserFirstName
+          Value: Default
+        - Key: SSOUserLastName
+          Value: User
+
+  CreateAccountFIN:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductId: !Ref ProductId
+      ProvisioningArtifactId: !Ref ProvisioningArtifactId
+      ProvisionedProductName: !Sub "${AccountName7}-Provisioned"
+      ProvisioningParameters:
+        - Key: AccountEmail
+          Value: !Ref AccountEmail7
+        - Key: AccountName
+          Value: !Ref AccountName7
+        - Key: ManagedOrganizationalUnit
+          Value: !Ref ManagedOrganizationalUnit
+        - Key: SSOUserEmail
+          Value: !Ref AccountEmail7
+        - Key: SSOUserFirstName
+          Value: Default
+        - Key: SSOUserLastName
+          Value: User
+
+Outputs:
+  TUAccountId:
+    Description: TU provisioned product id
+    Value: !GetAtt CreateAccountTU.ProvisionedProductId
+
+  INTAccountId:
+    Description: INT provisioned product id
+    Value: !GetAtt CreateAccountINT.ProvisionedProductId
+
+  CUSTAccountId:
+    Description: CUST provisioned product id
+    Value: !GetAtt CreateAccountCUST.ProvisionedProductId
+
+  SECAccountId:
+    Description: SEC provisioned product id
+    Value: !GetAtt CreateAccountSEC.ProvisionedProductId
+
+  COLLAccountId:
+    Description: COLL provisioned product id
+    Value: !GetAtt CreateAccountCOLL.ProvisionedProductId
+
+  COMMAccountId:
+    Description: COMM provisioned product id
+    Value: !GetAtt CreateAccountCOMM.ProvisionedProductId
+
+  FINAccountId:
+    Description: FIN provisioned product id
+    Value: !GetAtt CreateAccountFIN.ProvisionedProductId
