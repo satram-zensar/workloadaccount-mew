@@ -1,0 +1,85 @@
+name: CFN Deploy (Sandbox - Dry Run)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'templates/**'
+  workflow_dispatch:
+
+env:
+  TEMPLATE_PATH: templates/Cfn-create-7-accounts.yaml
+  STACK_NAME: sandbox-cfn-validate
+
+jobs:
+  validate-and-changeset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Runner diagnostics (confirm file present)
+        run: |
+          echo "WORKDIR: $(pwd)"
+          ls -la
+          echo "Show template file:"
+          [ -f "$TEMPLATE_PATH" ] && echo "FOUND" || echo "NOT FOUND"
+          ls -R templates || true
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install cfn-lint & AWS CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install cfn-lint
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
+
+      - name: Run cfn-lint
+        run: cfn-lint -t $TEMPLATE_PATH
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Validate CloudFormation template
+        run: aws cloudformation validate-template --template-body file://$TEMPLATE_PATH
+
+      - name: Create CloudFormation change-set (DRY RUN)
+        env:
+          SERVICECATALOG_PRODUCTID: ${{ secrets.SERVICECATALOG_PRODUCTID }}
+          PROVISIONING_ARTIFACT_ID: ${{ secrets.PROVISIONING_ARTIFACT_ID }}
+          MANAGED_OU: ${{ secrets.MANAGED_OU }}
+        run: |
+          CHANGESET_NAME="cs-$(date +%s)"
+          echo "Creating change set: $CHANGESET_NAME"
+          aws cloudformation create-change-set \
+            --stack-name $STACK_NAME \
+            --change-set-name $CHANGESET_NAME \
+            --template-body file://$TEMPLATE_PATH \
+            --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+            --parameters \
+              ParameterKey=ProductId,ParameterValue=${SERVICECATALOG_PRODUCTID} \
+              ParameterKey=ProvisioningArtifactId,ParameterValue=${PROVISIONING_ARTIFACT_ID} \
+              ParameterKey=AccountEmail1,ParameterValue=${{ secrets.ACCOUNT_EMAIL_1 }} \
+              ParameterKey=AccountName1,ParameterValue=${{ secrets.ACCOUNT_NAME_1 }} \
+              ParameterKey=AccountEmail2,ParameterValue=${{ secrets.ACCOUNT_EMAIL_2 }} \
+              ParameterKey=AccountName2,ParameterValue=${{ secrets.ACCOUNT_NAME_2 }} \
+              ParameterKey=AccountEmail3,ParameterValue=${{ secrets.ACCOUNT_EMAIL_3 }} \
+              ParameterKey=AccountName3,ParameterValue=${{ secrets.ACCOUNT_NAME_3 }} \
+              ParameterKey=AccountEmail4,ParameterValue=${{ secrets.ACCOUNT_EMAIL_4 }} \
+              ParameterKey=AccountName4,ParameterValue=${{ secrets.ACCOUNT_NAME_4 }} \
+              ParameterKey=AccountEmail5,ParameterValue=${{ secrets.ACCOUNT_EMAIL_5 }} \
+              ParameterKey=AccountName5,ParameterValue=${{ secrets.ACCOUNT_NAME_5 }} \
+              ParameterKey=AccountEmail6,ParameterValue=${{ secrets.ACCOUNT_EMAIL_6 }} \
+              ParameterKey=AccountName6,ParameterValue=${{ secrets.ACCOUNT_NAME_6 }} \
+              ParameterKey=AccountEmail7,ParameterValue=${{ secrets.ACCOUNT_EMAIL_7 }} \
+              ParameterKey=AccountName7,ParameterValue=${{ secrets.ACCOUNT_NAME_7 }} \
+              ParameterKey=ManagedOrganizationalUnit,ParameterValue=${MANAGED_OU}
+          aws cloudformation describe-change-set --stack-name $STACK_NAME --change-set-name $CHANGESET_NAME --query 'Changes' --output json
