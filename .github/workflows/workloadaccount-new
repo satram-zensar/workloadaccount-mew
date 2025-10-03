@@ -1,0 +1,101 @@
+name: Account creation Deployment
+ 
+on:
+  workflow_dispatch:
+    inputs:
+      folderPath:
+        description: "Path under cloudformation/ (e.g. 'vpc' or 'network/peering')"
+        required: true
+        default: "vpc"
+      stackName:
+        description: "Name of CloudFormation stack to deploy"
+        required: true
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.MGMT_ROLE }}
+          role-session-name: account_cft_deployment
+          aws-region: eu-west-1
+ 
+      - name: Install jq
+        run: sudo apt-get install -y jq
+ 
+      - name: Deploy stack
+        run: |
+          set -e
+ 
+          base_dir="cloudformation"
+          folder="${{ github.event.inputs.folderPath }}"
+          full_path="${base_dir}/${folder}"
+          stack_name="${{ github.event.inputs.stackName }}"
+ 
+ 
+          # Look for *-template.yaml or .yml
+          template_file=$(find "$full_path" -type f \( -iname "*-template.yaml" -o -iname "*-template.yml" \) | head -n 1)
+          params_file="${full_path}/params.json"
+ 
+          if [[ -z "$template_file" ]]; then
+            echo " No template matching '*-template.y[a]ml' found in $full_path"
+            exit 1
+          fi
+ 
+          if [[ ! -f "$params_file" ]]; then
+            echo "params.json not found in $full_path"
+            exit 1
+          fi
+ 
+          echo "Deploying stack '$stack_name' using:"
+          echo "  Template: $template_file"
+          echo "  Params:   $params_file"
+ 
+          if ! aws cloudformation deploy \
+            --stack-name "$stack_name" \
+            --template-file "$template_file" \
+            --parameter-overrides file://"$params_file" \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset; then
+          echo " Stack deployment failed. Fetching failure reason..."
+          aws cloudformation describe-stack-events \
+            --stack-name "$stack_name" \
+            --query "StackEvents[?ResourceStatus=='CREATE_FAILED'].[LogicalResourceId, ResourceStatusReason]" \
+            --output table || echo " Failed to fetch stack events" \
+          exit 1
+          fi
+      - name: Extract CloudFormation outputs
+        id: get_outputs
+        run: |
+          set -e
+ 
+          stack_name="${{ github.event.inputs.stackName }}"
+ 
+          echo " Fetching outputs for stack: $stack_name"
+ 
+          outputs_json=$(aws cloudformation describe-stacks \
+            --stack-name "$stack_name" \
+            --query "Stacks[0].Outputs" \
+            --output json)
+ 
+          echo "$outputs_json" | jq
+ 
+          for row in $(echo "$outputs_json" | jq -r '.[] | @base64'); do
+            _jq() {
+              echo "${row}" | base64 --decode | jq -r "${1}"
+            }
+ 
+            key=$(_jq '.OutputKey')
+            value=$(_jq '.OutputValue')
+ 
+            echo " $key = $value"
+            echo "${key}=${value}" >> $GITHUB_OUTPUT
+          done
